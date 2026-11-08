@@ -1,0 +1,9 @@
+/* 色を変える場合はここを編集してください。後から読み込まれるため優先されます。 */
+:root {
+  --bg: #eee9ff;
+  --panel: #cceafa;
+  --blue: #65bced;
+  --ink: #4d3b71;
+  --muted: #6f6189;
+  --line: #bca9df;
+}

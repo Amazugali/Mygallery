@@ -1,0 +1,311 @@
+media:
+  input: media
+  output: /media
+  extensions:
+  - png
+  - jpg
+  - jpeg
+  - webp
+  - gif
+  rename: random
+content:
+- name: world-0
+  label: 天宮ソルナ｜世界観・キャラ
+  type: file
+  path: content/worlds/0.json
+  format: json
+  operations:
+    delete: false
+  fields:
+  - name: name
+    label: ページ名・世界観タイトル
+    type: string
+    required: true
+  - name: bio
+    label: 世界観の紹介
+    type: text
+  - name: avatar
+    label: タブの画像
+    type: image
+  - name: banner
+    label: 世界観欄の右側の画像
+    type: image
+  - name: members
+    label: キャラクター一覧（並び替え可能）
+    type: object
+    list:
+      collapsible:
+        collapsed: true
+        summary: '{name}'
+    fields:
+    - name: id
+      label: 管理用ID（変更不要）
+      type: uuid
+      readonly: true
+    - name: name
+      label: キャラクター名
+      type: string
+      required: true
+    - name: roman
+      label: 背景に表示する英字名
+      type: string
+    - name: bio
+      label: プロフィール
+      type: text
+    - name: thumbnail
+      label: 一覧のサムネイル
+      type: image
+    - name: standing
+      label: メインの立ち絵
+      type: image
+    - name: settings
+      label: 設定画・追加画像（並び替え可能）
+      type: image
+      list: true
+- name: gallery-0
+  label: 天宮ソルナ｜ギャラリー
+  type: collection
+  path: content/gallery/0
+  format: json
+  filename: '{fields.id}.json'
+  view:
+    primary: title
+    fields:
+    - title
+    - order
+    - published
+    sort:
+    - order
+    - title
+    default:
+      sort: order
+      order: asc
+  fields:
+  - name: id
+    label: 管理用ID（変更不要）
+    type: uuid
+    readonly: true
+  - name: title
+    label: タイトル
+    type: string
+  - name: comment
+    label: 説明・一言
+    type: text
+  - name: pages
+    label: 画像（先頭が表紙／並び順が読む順番）
+    type: image
+    required: true
+    list:
+      min: 1
+  - name: tags
+    label: タグ
+    type: string
+    list: true
+  - name: order
+    label: 表示順（小さい数字ほど先頭）
+    type: number
+    default: 0
+  - name: published
+    label: 公開する
+    type: boolean
+    default: true
+- name: world-1
+  label: ムース＆チョコ｜世界観・キャラ
+  type: file
+  path: content/worlds/1.json
+  format: json
+  operations:
+    delete: false
+  fields:
+  - name: name
+    label: ページ名・世界観タイトル
+    type: string
+    required: true
+  - name: bio
+    label: 世界観の紹介
+    type: text
+  - name: avatar
+    label: タブの画像
+    type: image
+  - name: banner
+    label: 世界観欄の右側の画像
+    type: image
+  - name: members
+    label: キャラクター一覧（並び替え可能）
+    type: object
+    list:
+      collapsible:
+        collapsed: true
+        summary: '{name}'
+    fields:
+    - name: id
+      label: 管理用ID（変更不要）
+      type: uuid
+      readonly: true
+    - name: name
+      label: キャラクター名
+      type: string
+      required: true
+    - name: roman
+      label: 背景に表示する英字名
+      type: string
+    - name: bio
+      label: プロフィール
+      type: text
+    - name: thumbnail
+      label: 一覧のサムネイル
+      type: image
+    - name: standing
+      label: メインの立ち絵
+      type: image
+    - name: settings
+      label: 設定画・追加画像（並び替え可能）
+      type: image
+      list: true
+- name: gallery-1
+  label: ムース＆チョコ｜ギャラリー
+  type: collection
+  path: content/gallery/1
+  format: json
+  filename: '{fields.id}.json'
+  view:
+    primary: title
+    fields:
+    - title
+    - order
+    - published
+    sort:
+    - order
+    - title
+    default:
+      sort: order
+      order: asc
+  fields:
+  - name: id
+    label: 管理用ID（変更不要）
+    type: uuid
+    readonly: true
+  - name: title
+    label: タイトル
+    type: string
+  - name: comment
+    label: 説明・一言
+    type: text
+  - name: pages
+    label: 画像（先頭が表紙／並び順が読む順番）
+    type: image
+    required: true
+    list:
+      min: 1
+  - name: tags
+    label: タグ
+    type: string
+    list: true
+  - name: order
+    label: 表示順（小さい数字ほど先頭）
+    type: number
+    default: 0
+  - name: published
+    label: 公開する
+    type: boolean
+    default: true
+- name: world-2
+  label: ヴァンデモン先生｜世界観・キャラ
+  type: file
+  path: content/worlds/2.json
+  format: json
+  operations:
+    delete: false
+  fields:
+  - name: name
+    label: ページ名・世界観タイトル
+    type: string
+    required: true
+  - name: bio
+    label: 世界観の紹介
+    type: text
+  - name: avatar
+    label: タブの画像
+    type: image
+  - name: banner
+    label: 世界観欄の右側の画像
+    type: image
+  - name: members
+    label: キャラクター一覧（並び替え可能）
+    type: object
+    list:
+      collapsible:
+        collapsed: true
+        summary: '{name}'
+    fields:
+    - name: id
+      label: 管理用ID（変更不要）
+      type: uuid
+      readonly: true
+    - name: name
+      label: キャラクター名
+      type: string
+      required: true
+    - name: roman
+      label: 背景に表示する英字名
+      type: string
+    - name: bio
+      label: プロフィール
+      type: text
+    - name: thumbnail
+      label: 一覧のサムネイル
+      type: image
+    - name: standing
+      label: メインの立ち絵
+      type: image
+    - name: settings
+      label: 設定画・追加画像（並び替え可能）
+      type: image
+      list: true
+- name: gallery-2
+  label: ヴァンデモン先生｜ギャラリー
+  type: collection
+  path: content/gallery/2
+  format: json
+  filename: '{fields.id}.json'
+  view:
+    primary: title
+    fields:
+    - title
+    - order
+    - published
+    sort:
+    - order
+    - title
+    default:
+      sort: order
+      order: asc
+  fields:
+  - name: id
+    label: 管理用ID（変更不要）
+    type: uuid
+    readonly: true
+  - name: title
+    label: タイトル
+    type: string
+  - name: comment
+    label: 説明・一言
+    type: text
+  - name: pages
+    label: 画像（先頭が表紙／並び順が読む順番）
+    type: image
+    required: true
+    list:
+      min: 1
+  - name: tags
+    label: タグ
+    type: string
+    list: true
+  - name: order
+    label: 表示順（小さい数字ほど先頭）
+    type: number
+    default: 0
+  - name: published
+    label: 公開する
+    type: boolean
+    default: true
