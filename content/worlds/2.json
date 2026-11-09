@@ -1,20 +1,20 @@
 {
   "name": "ヴァンデモン先生",
   "bio": "ヴァンデモン先生と愉快な仲間たち\nデジモンワールドのヴァンデモンを基に、大幅に改変を加えた二次創作",
+  "avatar": "/media/70b415d99f2eb009587d.png",
+  "banner": "/media/mw9a8dlf-21nma9ex.webp",
   "members": [
     {
       "id": "4ca4af1f-53db-48ce-9655-d7d09bf6bdaf",
       "name": "ヴァンデモン",
-      "bio": "紳士",
       "roman": "VANDEMON",
-      "thumbnail": "media/4fc7bf46b05d742499b6.png",
-      "standing": "media/4fa2abfa930c7599fcf2.png",
+      "bio": "紳士",
+      "thumbnail": "/media/4fc7bf46b05d742499b6.png",
+      "standing": "/media/4fa2abfa930c7599fcf2.png",
       "settings": [
-        "media/ed305e6005f8aaccc61f.png",
-        "media/70b415d99f2eb009587d.png"
+        "/media/ed305e6005f8aaccc61f.png",
+        "/media/70b415d99f2eb009587d.png"
       ]
     }
-  ],
-  "avatar": "media/70b415d99f2eb009587d.png",
-  "banner": null
+  ]
 }
