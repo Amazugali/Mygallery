@@ -5,19 +5,39 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image converter
+        run: python -m pip install Pillow==13.0.0
+      - name: Replace repository PNGs and update CMS references
+        run: python scripts/optimize-images.py
+      - name: Commit converted images and CMS references
+        shell: bash
+        run: |
+          git add -- media content
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Convert PNG images to lossless WebP"
+            git push origin HEAD:main
+          fi
+      # The bot commit need not start another workflow: this run builds and deploys it.
       - uses: actions/configure-pages@v5
       - name: Build gallery
         run: node scripts/build.mjs
@@ -27,6 +47,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

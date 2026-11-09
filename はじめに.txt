@@ -1,0 +1,37 @@
+Mygallery 自動WebP置換版（前の公開用だけ圧縮する版から差し替え）
+
+導入はコード3ファイルを上書きしてCommit・Pushするだけです。
+1. GitHub DesktopでFetch origin → 必要ならPull origin。
+2. ZIP内の .github / scripts / assets をPCのMygalleryフォルダーへコピーして、同名ファイルを上書き。
+3. Commit to main → Push origin。
+4. ActionsのPublish galleryが成功したら、GitHub DesktopでもFetch origin → Pull origin。
+
+変更するのは以下の3ファイルです。
+.github/workflows/pages.yml
+scripts/optimize-images.py
+assets/app.js（前回のエスケープ修正を含む）
+
+今後はPages CMSからPNGを追加すると、Publish gallery内で次の順に動きます。
+PNG→可逆WebP変換 → CMSの画像パス修正 → 元PNG削除 → GitHubへ自動コミット・Push → ビルド・公開。
+既存PNGも最初の実行で変換対象になります。
+CMSではWebPとして表示されるようになります。
+アニメーションPNG、特殊モード、変換で小さくならないPNG、未知の箇所で参照されているPNGは残します。
+寸法・透過・色をピクセル比較し、元と一致した場合だけ採用します。
+画像そのものを手動削除する必要はありません。
+
+重要：これは現在のファイルをWebPに置き換える処理です。
+過去のGit履歴は変更しません。既存PNGも、今後CMSからアップロードしたPNGも、元のコミットには残ります。
+そのため履歴を含む.gitフォルダーやクローンの容量を減らす処理ではなく、変換コミット分だけ増える場合もあります。
+履歴込みでGitを小さくするには、履歴整理または新規リポジトリへの移行が別途必要です。
+この更新には強制Pushや履歴削除は含めていません。
+
+以前の独立したcompress-images.ymlがある場合は削除してからCommitしてください。
+自動変換はPublish galleryに統合しています。
+ブランチ保護などで自動Pushが禁止されている場合は、処理が失敗して停止します。強制上書きはしません。
+変換実行中にCMSから別の変更が入ると通常Pushが拒否されることがあります。次のPublish galleryで最新内容を処理します。
+画像変換のコミットで別ワークフローが起動しなくても、この実行が続けて公開するため正常です。
+
+検証：受け取ったファイルでPNG6枚・CMSデータ3ファイルを更新し、サイトのビルド成功を確認。
+現在のmediaファイル合計10,372,303→6,118,228 bytes。
+参照更新・元PNG削除・RGBA一致・透過・再実行・未知の参照の保護・不正JSON時の停止を検証。
+GitHub上の実行はPush後に確認してください。
