@@ -2,9 +2,24 @@ name: Publish gallery
 on:
   push:
     branches: [main]
+    paths:
+      - 'assets/**'
+      - 'content/**'
+      - 'media/**'
+      - 'index.html'
+      - 'scripts/**'
+      - '.github/workflows/pages.yml'
+      - '.github/requirements-images.txt'
   workflow_dispatch:
+    inputs:
+      force:
+        description: '同じ内容でも再公開する'
+        type: boolean
+        default: true
 permissions:
   contents: read
+# Keep one active run and let GitHub replace old pending runs with the latest.
+# Do not cancel an in-progress push or Pages deployment.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -13,39 +28,67 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      digest: ${{ steps.prepare.outputs.digest }}
+      commit: ${{ steps.prepare.outputs.commit }}
+      publish: ${{ steps.latest.outputs.current == 'true' && (steps.published.outputs.same != 'true' || inputs.force == true) }}
     steps:
+      - name: Collect nearby CMS saves
+        run: sleep 30
       - uses: actions/checkout@v6
         with:
           ref: main
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
-      - name: Install image converter
-        run: python -m pip install Pillow==13.0.0
-      - name: Replace repository PNGs and update CMS references
-        run: python scripts/optimize-images.py
-      - name: Commit converted images and CMS references
+          cache: pip
+          cache-dependency-path: .github/requirements-images.txt
+      - name: Convert, validate and build latest content
+        id: prepare
+        run: python scripts/prepare-gallery.py
+      - name: Check whether this exact site was already published
+        id: last_published
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: .gallery-published
+          key: gallery-last-published-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: gallery-last-published-v2-
+      - name: Compare with last successful publication
+        id: published
+        env:
+          SITE_DIGEST: ${{ steps.prepare.outputs.digest }}
+        run: |
+          if [ -f .gallery-published/content.txt ] && [ "$(cat .gallery-published/content.txt)" = "$SITE_DIGEST" ]; then
+            echo "same=true" >> "$GITHUB_OUTPUT"
+            echo "This content is already live; deployment can be skipped."
+          else
+            echo "same=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check for a newer CMS save
+        id: latest
         shell: bash
         run: |
-          git add -- media content
-          if ! git diff --cached --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Convert PNG images to lossless WebP"
-            git push origin HEAD:main
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "A newer save exists; the next run will publish it."
           fi
-      # The bot commit need not start another workflow: this run builds and deploys it.
-      - uses: actions/configure-pages@v5
-      - name: Build gallery
-        run: node scripts/build.mjs
-      - uses: actions/upload-pages-artifact@v4
+      - name: Configure Pages
+        if: steps.latest.outputs.current == 'true' && (steps.published.outputs.same != 'true' || inputs.force == true)
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        if: steps.latest.outputs.current == 'true' && (steps.published.outputs.same != 'true' || inputs.force == true)
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
   deploy:
     needs: build
+    if: needs.build.outputs.publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,6 +98,35 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Do not publish an outdated build
+        id: latest
+        env:
+          BUILT_COMMIT: ${{ needs.build.outputs.commit }}
+        run: |
+          if [ "$(git rev-parse HEAD)" = "$BUILT_COMMIT" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Newer content exists; skipped outdated deployment."
+          fi
       - name: Deploy gallery
         id: deployment
+        if: steps.latest.outputs.current == 'true'
         uses: actions/deploy-pages@v5
+      - name: Mark this content as published
+        if: steps.deployment.outcome == 'success'
+        env:
+          SITE_DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          mkdir -p .gallery-published
+          printf '%s\n' "$SITE_DIGEST" > .gallery-published/content.txt
+      - name: Remember successful publication
+        if: steps.deployment.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: .gallery-published
+          key: gallery-last-published-v2-${{ github.run_id }}-${{ github.run_attempt }}
