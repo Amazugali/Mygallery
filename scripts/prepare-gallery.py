@@ -46,13 +46,14 @@ def main():
         refresh()
         git('reset', '--hard', 'origin/main')
         has_png = any(p.is_file() and p.suffix.lower() == '.png' for p in (ROOT / 'media').rglob('*'))
-        if has_png:
+        has_legacy_webp = any(p.is_file() and p.suffix.lower() == '.webp' and any(part.lower() == '_webp' for part in p.relative_to(ROOT / 'media').parts[:-1]) for p in (ROOT / 'media').rglob('*'))
+        if has_png or has_legacy_webp:
             if importlib.util.find_spec('PIL') is None:
                 subprocess.run([sys.executable, '-m', 'pip', 'install', '-r',
                                 '.github/requirements-images.txt'], cwd=ROOT, check=True)
             subprocess.run([sys.executable, 'scripts/optimize-images.py'], cwd=ROOT, check=True)
         else:
-            print('No PNG files: skipped converter installation and conversion.', flush=True)
+            print('No PNG or legacy WebP files: skipped converter installation and conversion.', flush=True)
         # Fail before committing if any CMS image reference is broken.
         subprocess.run(['node', 'scripts/build.mjs'], cwd=ROOT, check=True)
         git('add', '--', 'media', 'content')

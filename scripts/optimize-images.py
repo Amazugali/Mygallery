@@ -72,6 +72,39 @@ def main(root=ROOT):
         documents[path] = json.loads(path.read_text(encoding='utf-8'))
     mapping, payloads = {}, {}
     before = sum(p.stat().st_size for p in media.rglob('*') if p.is_file())
+    # Plan destination names without overwriting existing, different images.
+    def destination_for(name, encoded):
+        stem = Path(name).stem
+        candidate = 'media/' + stem + '.webp'
+        digest = hashlib.sha256(encoded).hexdigest()
+        number = 0
+        while True:
+            target = root / candidate
+            if target.is_symlink():
+                raise ValueError('Unexpected symbolic link in destination')
+            previous = payloads.get(candidate)
+            if previous is None and target.exists():
+                previous = target.read_bytes()
+            if previous is None or previous == encoded:
+                payloads[candidate] = encoded
+                return candidate
+            number += 1
+            candidate = 'media/' + stem + '-' + digest[:16] + (('-' + str(number)) if number > 1 else '') + '.webp'
+
+    # Flatten previous conversion folders too, even if no PNGs remain.
+    legacy_directories = [p for p in media.iterdir() if p.is_dir() and p.name.lower() == '_webp']
+    moved_sources = set()
+    for directory in legacy_directories:
+        if directory.is_symlink():
+            raise ValueError('Unexpected symbolic link in legacy media directory')
+        for path in sorted(directory.rglob('*')):
+            if not path.is_file() or path.suffix.lower() != '.webp':
+                continue
+            if path.is_symlink() or not path.resolve().is_relative_to(media.resolve()):
+                raise ValueError('Unexpected symbolic link in legacy media')
+            source = path.relative_to(root).as_posix()
+            mapping[source] = destination_for(path.name, path.read_bytes())
+            moved_sources.add(source)
     for path in sorted(media.rglob('*')):
         if not path.is_file() or path.suffix.lower() != '.png':
             continue
@@ -96,9 +129,7 @@ def main(root=ROOT):
                 with Image.open(io.BytesIO(encoded)) as decoded:
                     if decoded.size != rgba.size or decoded.convert('RGBA').tobytes() != rgba.tobytes():
                         raise ValueError('Lossless verification failed')
-                digest = hashlib.sha256(encoded).hexdigest()
-                target = 'media/_webp/' + digest + '.webp'
-                mapping[source], payloads[target] = target, encoded
+                mapping[source] = destination_for(path.name, encoded)
         except (OSError, ValueError, Image.DecompressionBombError) as exc:
             print('Kept original:', path.name, '(' + type(exc).__name__ + ')')
     # Do not delete PNGs referenced by unknown JSON fields or handwritten code.
@@ -133,11 +164,18 @@ def main(root=ROOT):
         if not (root / target).is_file():
             raise ValueError('Missing WebP output; originals retained')
         if any(canonical(s) == source for doc in updated.values() for s in strings(doc)):
-            raise ValueError('PNG reference remains; originals retained')
+            raise ValueError('Old image reference remains; originals retained')
     for source in mapping:
         (root / source).unlink()
     after = sum(p.stat().st_size for p in media.rglob('*') if p.is_file())
-    print(f'PNG -> WebP: {len(mapping)}; CMS files updated: {sum(updated[p] != documents[p] for p in documents)}')
+    for directory in legacy_directories:
+        for child in sorted(directory.rglob('*'), key=lambda p: len(p.parts), reverse=True):
+            if child.is_dir() and not child.is_symlink() and not any(child.iterdir()):
+                child.rmdir()
+        if not any(directory.iterdir()):
+            directory.rmdir()
+    migrated = len(moved_sources & mapping.keys())
+    print(f'PNG -> WebP: {len(mapping) - migrated}; existing WebP files moved: {migrated}; CMS files updated: {sum(updated[p] != documents[p] for p in documents)}')
     print(f'Current media files: {before:,} -> {after:,} bytes')
     print('Past Git history is unchanged.')
 
