@@ -1,5 +1,13 @@
 {
   "name": "天宮ソルナ",
   "bio": "俺です",
-  "avatar": "/media/204a390bdd38a2c95b8cbb2411e4d1e443f03107876031d1919cb3706b02106a.webp"
+  "avatar": "/media/204a390bdd38a2c95b8cbb2411e4d1e443f03107876031d1919cb3706b02106a.webp",
+  "members": [
+    {
+      "id": "91bfd9a9-699e-4128-813f-a77f658b3ad3",
+      "name": "天宮ソルナ",
+      "roman": "SOLUNA",
+      "thumbnail": "/media/204a390bdd38a2c95b8cbb2411e4d1e443f03107876031d1919cb3706b02106a.webp"
+    }
+  ]
 }
