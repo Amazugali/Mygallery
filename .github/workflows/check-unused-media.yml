@@ -1,0 +1,16 @@
+name: Check unused media
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Check media references (read-only)
+        run: node scripts/check-unused-media.mjs
