@@ -12,6 +12,21 @@ function galleryItems(){return viewer?.id?list():[]}
 function drawReader(){const pages=viewer.pages;const items=galleryItems(),index=items.findIndex(i=>i.id===viewer.id);$('#largeTitle').textContent=viewer.title||'無題';$('#largeComment').textContent=viewer.comment||'';$('#largeTags').textContent=(viewer.tags||[]).map(t=>'#'+t).join('　');$('#readingMode').classList.toggle('hidden',pages.length<2);$('#readingMode').textContent=vertical?'1枚ずつ読む':'縦に並べて読む';$('.reader-controls:not(.bottom-controls)').classList.toggle('hidden',!viewer.id);$('.bottom-controls').classList.toggle('hidden',pages.length<2||vertical);$('#position').textContent=viewer.id?'作品 '+(index+1)+' / '+items.length:'';$('#prev').disabled=index<=0;$('#next').disabled=index<0||index===items.length-1;$('#prevBottom').disabled=page===0;$('#nextBottom').disabled=page===pages.length-1;$('#positionBottom').textContent='ページ '+(page+1)+' / '+pages.length;$('.reader-body').classList.toggle('vertical',vertical);$('.reader-body').innerHTML=(vertical?pages:[pages[page]]).map((src,i)=>'<img class="pageimage" src="'+esc(src)+'" alt="'+esc(viewer.title||'画像')+' '+(vertical?i+1:page+1)+' / '+pages.length+'">').join('')}
 function stepPage(delta){const next=page+delta;if(next<0||next>=viewer.pages.length)return;page=next;drawReader();$('#viewer').scrollTop=0;}
 function stepGallery(delta){const items=galleryItems(),index=items.findIndex(i=>i.id===viewer.id),next=index+delta;if(index<0||next<0||next>=items.length)return;viewer=items[next];page=0;drawReader();$('#viewer').scrollTop=0;}
+// 画像をクリックして拡大。既存の作品送り・ページ送りはそのまま維持する。
+const zoomDialog=$('#imageZoom'),zoomImage=$('#zoomImage'),zoomStage=$('.zoom-stage');
+let zoomScale=2,zoomX=0,zoomY=0,zoomPointer=null,zoomMoved=false;
+function paintZoom(){zoomImage.style.transform=`translate(${zoomX}px, ${zoomY}px) scale(${zoomScale})`}
+function openZoom(img){zoomImage.src=img.currentSrc||img.src;zoomImage.alt=img.alt;zoomScale=2;zoomX=0;zoomY=0;zoomPointer=null;zoomMoved=false;paintZoom();zoomDialog.showModal()}
+function closeZoom(){if(zoomDialog.open)zoomDialog.close()}
+$('#closeZoom').onclick=closeZoom;
+$('.reader-body').addEventListener('click',e=>{const img=e.target.closest('.pageimage');if(img)openZoom(img)});
+zoomStage.addEventListener('pointerdown',e=>{if(e.button!==0)return;zoomPointer={id:e.pointerId,x:e.clientX,y:e.clientY,ox:zoomX,oy:zoomY};zoomMoved=false;zoomStage.setPointerCapture(e.pointerId)});
+zoomStage.addEventListener('pointermove',e=>{if(!zoomPointer||e.pointerId!==zoomPointer.id)return;const dx=e.clientX-zoomPointer.x,dy=e.clientY-zoomPointer.y;if(Math.hypot(dx,dy)>5)zoomMoved=true;zoomX=zoomPointer.ox+dx;zoomY=zoomPointer.oy+dy;paintZoom()});
+zoomStage.addEventListener('pointerup',e=>{if(!zoomPointer||e.pointerId!==zoomPointer.id)return;zoomPointer=null;if(!zoomMoved)closeZoom()});
+zoomStage.addEventListener('pointercancel',()=>{zoomPointer=null});
+zoomStage.addEventListener('wheel',e=>{e.preventDefault();zoomScale=Math.max(1,Math.min(6,zoomScale*(e.deltaY<0?1.15:1/1.15)));paintZoom()},{passive:false});
+zoomDialog.addEventListener('click',e=>{if(e.target===zoomDialog)closeZoom()});
+zoomDialog.addEventListener('close',()=>{zoomPointer=null;zoomImage.removeAttribute('src')});
 $('#closeCharacter').onclick=()=>$('#characterDetail').close();
 $('#prev').onclick=()=>stepGallery(-1);$('#next').onclick=()=>stepGallery(1);
 $('#prevBottom').onclick=()=>stepPage(-1);$('#nextBottom').onclick=()=>stepPage(1);
